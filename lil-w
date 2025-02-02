@@ -1,0 +1,1218 @@
+local OrionLib = loadstring(game:HttpGet(('https://raw.githubusercontent.com/jensonhirst/Orion/main/source')))()
+
+local Window = OrionLib:MakeWindow({Name = "64ware.cc", HidePremium = true, SaveConfig = false, ConfigFolder = "OrionTest"})
+
+local Tab = Window:MakeTab({
+	Name = "Credits",
+	Icon = "rbxassetid://18449541318",
+	PremiumOnly = false
+})
+
+local Section = Tab:AddSection({
+	Name = "HTTPS://DISCORD.GG/UDww3uCD"
+})
+
+local Section = Tab:AddSection({
+	Name = "MADE BY @SSW0RD64 FOR 64SQUAD"
+})
+
+local Section = Tab:AddSection({
+	Name = "more features coming soon..."
+})
+
+local Tab = Window:MakeTab({
+	Name = "64ware.cc",
+	Icon = "rbxassetid://14916455451",
+	PremiumOnly = false
+})
+
+local Section = Tab:AddSection({
+	Name = "64WARE.CC CURRENT VERSION - V0.101 BETA"
+})
+
+local Section = Tab:AddSection({
+	Name = "Aimbot"
+})
+
+Tab:AddButton({
+	Name = "Aimbot",
+	Callback = function()
+      		local Camera = workspace.CurrentCamera
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
+local TweenService = game:GetService("TweenService")
+local VIM = game:GetService("VirtualInputManager")
+local GuiService = game:GetService("GuiService")
+
+local LocalPlayer = Players.LocalPlayer
+local Holding = false
+local Target = nil
+
+_G.AimbotEnabled = true
+_G.TeamCheck = true -- If set to true then the script would only lock your aim at enemy team members.
+_G.AimPart = "Head" -- Where the aimbot script would lock at.
+_G.Sensitivity = 0.0 -- How many seconds it takes for the aimbot script to officially lock onto the target's aimpart.
+_G.FOV = 90 -- Field of View in degrees
+_G.AimOffset = Vector3.new(0, 0.05, 0) -- Offset to aim slightly below the target's head
+_G.CheckWalls = false -- Enable or disable wall check
+
+local function IsPointVisible(startPosition, endPosition, targetPlayer)
+    local direction = (endPosition - startPosition).unit
+    local distance = (endPosition - startPosition).magnitude
+    local ray = Ray.new(startPosition, direction * distance)
+
+    -- Создаем RaycastParams и настраиваем его
+    local raycastParams = RaycastParams.new()
+    raycastParams.FilterDescendantsInstances = {LocalPlayer.Character, targetPlayer.Character}
+    raycastParams.FilterType = Enum.RaycastFilterType.Exclude
+
+    -- Выполняем Raycast
+    local result = workspace:Raycast(ray.Origin, ray.Direction, raycastParams)
+    return not result
+end
+
+
+
+local function GetClosestPlayer()
+    local MaximumDistance = math.huge
+    local ClosestPlayer = nil
+
+    local CameraDirection = Camera.CFrame.LookVector
+    local CameraPosition = Camera.CFrame.Position
+
+    for _, v in next, Players:GetPlayers() do
+        if v.Name ~= LocalPlayer.Name then
+            if _G.TeamCheck == true then
+                if v.Team ~= LocalPlayer.Team then
+                    if v.Character and v.Character:FindFirstChild("HumanoidRootPart") and v.Character:FindFirstChild("Humanoid") and v.Character.Humanoid.Health > 0 then
+                        local TargetPosition = v.Character.HumanoidRootPart.Position + _G.AimOffset
+                        local DirectionToTarget = (TargetPosition - CameraPosition).unit
+                        local DotProduct = CameraDirection:Dot(DirectionToTarget)
+                        local Angle = math.acos(DotProduct) * (180 / math.pi)
+
+                        if Angle <= _G.FOV / 2 then
+                            local ScreenPoint = Camera:WorldToScreenPoint(TargetPosition)
+                            local MousePosition = Vector2.new(UserInputService:GetMouseLocation().X, UserInputService:GetMouseLocation().Y)
+                            local VectorDistance = (MousePosition - Vector2.new(ScreenPoint.X, ScreenPoint.Y)).Magnitude
+                        
+                            if VectorDistance < MaximumDistance then
+                                if _G.CheckWalls then
+                                    if IsPointVisible(CameraPosition, TargetPosition, v) then
+                                        ClosestPlayer = v
+                                        MaximumDistance = VectorDistance
+                                    end
+                                else
+                                    ClosestPlayer = v
+                                    MaximumDistance = VectorDistance
+                                end
+                            end
+                        end
+                    end
+                end
+            else
+                if v.Character and v.Character:FindFirstChild("HumanoidRootPart") and v.Character:FindFirstChild("Humanoid") and v.Character.Humanoid.Health > 0 then
+                    local TargetPosition = v.Character.HumanoidRootPart.Position + _G.AimOffset
+                    local DirectionToTarget = (TargetPosition - CameraPosition).unit
+                    local DotProduct = CameraDirection:Dot(DirectionToTarget)
+                    local Angle = math.acos(DotProduct) * (180 / math.pi)
+
+                    if Angle <= _G.FOV / 2 then
+                        local ScreenPoint = Camera:WorldToScreenPoint(TargetPosition)
+                        local MousePosition = Vector2.new(UserInputService:GetMouseLocation().X, UserInputService:GetMouseLocation().Y)
+                        local VectorDistance = (MousePosition - Vector2.new(ScreenPoint.X, ScreenPoint.Y)).Magnitude
+                        
+                        if VectorDistance < MaximumDistance then
+                            if _G.CheckWalls then
+                                if IsPointVisible(CameraPosition, TargetPosition, v) then
+                                    ClosestPlayer = v
+                                    MaximumDistance = VectorDistance
+                                end
+                            else
+                                ClosestPlayer = v
+                                MaximumDistance = VectorDistance
+                            end
+                        end
+                    end
+                end
+            end
+        end
+    end
+
+    return ClosestPlayer
+end
+
+
+local function ShowDebugInfo()
+    if Target then
+        local targetName = Target.Name
+        local targetPos = Target.Character and Target.Character[_G.AimPart] and Target.Character[_G.AimPart].Position or "N/A"
+        print("Current Target: ", targetName, " Position: ", targetPos)
+    else
+        print("No Target")
+    end
+end
+
+UserInputService.InputBegan:Connect(function(Input)
+    if Input.UserInputType == Enum.UserInputType.MouseButton2 then
+        Holding = true
+    end
+end)
+
+UserInputService.InputEnded:Connect(function(Input)
+    if Input.UserInputType == Enum.UserInputType.MouseButton2 then
+        Holding = false
+        Target = nil -- Reset target when the mouse button is released
+        
+    end
+end)
+
+RunService.RenderStepped:Connect(function()
+    if Holding and _G.AimbotEnabled then
+        if not Target or not Target.Character or not Target.Character:FindFirstChild(_G.AimPart) or Target.Character.Humanoid.Health == 0 then
+            Target = GetClosestPlayer()
+        end
+        if Target and Target.Character and Target.Character:FindFirstChild(_G.AimPart) then
+            TweenService:Create(Camera, TweenInfo.new(_G.Sensitivity, Enum.EasingStyle.Sine, Enum.EasingDirection.Out), {CFrame = CFrame.new(Camera.CFrame.Position, Target.Character[_G.AimPart].Position + _G.AimOffset)}):Play()
+            ClickMouseButton1(0.1) -- Simulate mouse click when aiming at the target
+        end
+        ShowDebugInfo() -- Display debug info in the output
+    end
+end)
+
+local function PressKey(KeyCode, Duration)
+    VIM:SendKeyEvent(true, KeyCode, false, game)
+    if Duration then
+        task.wait(Duration)
+        VIM:SendKeyEvent(false, KeyCode, false, game)
+    end
+end
+
+local function ClickMouseButton1(Duration)
+    local screenSize = Camera.ViewportSize
+    local x = screenSize.X / 2
+    local y = screenSize.Y / 2
+    
+    VIM:SendMouseButtonEvent(x, y, 0, Enum.UserInputState.Begin, false, game)
+    if Duration then
+        task.wait(Duration)
+        VIM:SendMouseButtonEvent(x, y, 0, Enum.UserInputState.End, false, game)
+    end
+end
+  	end    
+})
+
+Tab:AddButton({
+	Name = "Off aimbot",
+	Callback = function()
+      		local Camera = workspace.CurrentCamera
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
+local TweenService = game:GetService("TweenService")
+local VIM = game:GetService("VirtualInputManager")
+local GuiService = game:GetService("GuiService")
+
+local LocalPlayer = Players.LocalPlayer
+local Holding = false
+local Target = nil
+
+_G.AimbotEnabled = false
+_G.TeamCheck = false -- If set to true then the script would only lock your aim at enemy team members.
+_G.AimPart = "Head" -- Where the aimbot script would lock at.
+_G.Sensitivity = 0.0 -- How many seconds it takes for the aimbot script to officially lock onto the target's aimpart.
+_G.FOV = 90 -- Field of View in degrees
+_G.AimOffset = Vector3.new(0, 0.05, 0) -- Offset to aim slightly below the target's head
+_G.CheckWalls = false -- Enable or disable wall check
+
+local function IsPointVisible(startPosition, endPosition, targetPlayer)
+    local direction = (endPosition - startPosition).unit
+    local distance = (endPosition - startPosition).magnitude
+    local ray = Ray.new(startPosition, direction * distance)
+
+    -- Создаем RaycastParams и настраиваем его
+    local raycastParams = RaycastParams.new()
+    raycastParams.FilterDescendantsInstances = {LocalPlayer.Character, targetPlayer.Character}
+    raycastParams.FilterType = Enum.RaycastFilterType.Exclude
+
+    -- Выполняем Raycast
+    local result = workspace:Raycast(ray.Origin, ray.Direction, raycastParams)
+    return not result
+end
+
+
+
+local function GetClosestPlayer()
+    local MaximumDistance = math.huge
+    local ClosestPlayer = nil
+
+    local CameraDirection = Camera.CFrame.LookVector
+    local CameraPosition = Camera.CFrame.Position
+
+    for _, v in next, Players:GetPlayers() do
+        if v.Name ~= LocalPlayer.Name then
+            if _G.TeamCheck == true then
+                if v.Team ~= LocalPlayer.Team then
+                    if v.Character and v.Character:FindFirstChild("HumanoidRootPart") and v.Character:FindFirstChild("Humanoid") and v.Character.Humanoid.Health > 0 then
+                        local TargetPosition = v.Character.HumanoidRootPart.Position + _G.AimOffset
+                        local DirectionToTarget = (TargetPosition - CameraPosition).unit
+                        local DotProduct = CameraDirection:Dot(DirectionToTarget)
+                        local Angle = math.acos(DotProduct) * (180 / math.pi)
+
+                        if Angle <= _G.FOV / 2 then
+                            local ScreenPoint = Camera:WorldToScreenPoint(TargetPosition)
+                            local MousePosition = Vector2.new(UserInputService:GetMouseLocation().X, UserInputService:GetMouseLocation().Y)
+                            local VectorDistance = (MousePosition - Vector2.new(ScreenPoint.X, ScreenPoint.Y)).Magnitude
+                        
+                            if VectorDistance < MaximumDistance then
+                                if _G.CheckWalls then
+                                    if IsPointVisible(CameraPosition, TargetPosition, v) then
+                                        ClosestPlayer = v
+                                        MaximumDistance = VectorDistance
+                                    end
+                                else
+                                    ClosestPlayer = v
+                                    MaximumDistance = VectorDistance
+                                end
+                            end
+                        end
+                    end
+                end
+            else
+                if v.Character and v.Character:FindFirstChild("HumanoidRootPart") and v.Character:FindFirstChild("Humanoid") and v.Character.Humanoid.Health > 0 then
+                    local TargetPosition = v.Character.HumanoidRootPart.Position + _G.AimOffset
+                    local DirectionToTarget = (TargetPosition - CameraPosition).unit
+                    local DotProduct = CameraDirection:Dot(DirectionToTarget)
+                    local Angle = math.acos(DotProduct) * (180 / math.pi)
+
+                    if Angle <= _G.FOV / 2 then
+                        local ScreenPoint = Camera:WorldToScreenPoint(TargetPosition)
+                        local MousePosition = Vector2.new(UserInputService:GetMouseLocation().X, UserInputService:GetMouseLocation().Y)
+                        local VectorDistance = (MousePosition - Vector2.new(ScreenPoint.X, ScreenPoint.Y)).Magnitude
+                        
+                        if VectorDistance < MaximumDistance then
+                            if _G.CheckWalls then
+                                if IsPointVisible(CameraPosition, TargetPosition, v) then
+                                    ClosestPlayer = v
+                                    MaximumDistance = VectorDistance
+                                end
+                            else
+                                ClosestPlayer = v
+                                MaximumDistance = VectorDistance
+                            end
+                        end
+                    end
+                end
+            end
+        end
+    end
+
+    return ClosestPlayer
+end
+
+
+local function ShowDebugInfo()
+    if Target then
+        local targetName = Target.Name
+        local targetPos = Target.Character and Target.Character[_G.AimPart] and Target.Character[_G.AimPart].Position or "N/A"
+        print("Current Target: ", targetName, " Position: ", targetPos)
+    else
+        print("No Target")
+    end
+end
+
+UserInputService.InputBegan:Connect(function(Input)
+    if Input.UserInputType == Enum.UserInputType.MouseButton2 then
+        Holding = true
+    end
+end)
+
+UserInputService.InputEnded:Connect(function(Input)
+    if Input.UserInputType == Enum.UserInputType.MouseButton2 then
+        Holding = false
+        Target = nil -- Reset target when the mouse button is released
+        
+    end
+end)
+
+RunService.RenderStepped:Connect(function()
+    if Holding and _G.AimbotEnabled then
+        if not Target or not Target.Character or not Target.Character:FindFirstChild(_G.AimPart) or Target.Character.Humanoid.Health == 0 then
+            Target = GetClosestPlayer()
+        end
+        if Target and Target.Character and Target.Character:FindFirstChild(_G.AimPart) then
+            TweenService:Create(Camera, TweenInfo.new(_G.Sensitivity, Enum.EasingStyle.Sine, Enum.EasingDirection.Out), {CFrame = CFrame.new(Camera.CFrame.Position, Target.Character[_G.AimPart].Position + _G.AimOffset)}):Play()
+            ClickMouseButton1(0.1) -- Simulate mouse click when aiming at the target
+        end
+        ShowDebugInfo() -- Display debug info in the output
+    end
+end)
+
+local function PressKey(KeyCode, Duration)
+    VIM:SendKeyEvent(true, KeyCode, false, game)
+    if Duration then
+        task.wait(Duration)
+        VIM:SendKeyEvent(false, KeyCode, false, game)
+    end
+end
+
+local function ClickMouseButton1(Duration)
+    local screenSize = Camera.ViewportSize
+    local x = screenSize.X / 2
+    local y = screenSize.Y / 2
+    
+    VIM:SendMouseButtonEvent(x, y, 0, Enum.UserInputState.Begin, false, game)
+    if Duration then
+        task.wait(Duration)
+        VIM:SendMouseButtonEvent(x, y, 0, Enum.UserInputState.End, false, game)
+    end
+end
+  	end    
+})
+
+local Section = Tab:AddSection({
+	Name = "Visuals"
+})
+
+Tab:AddButton({
+	Name = "Chams",
+	Callback = function()
+      		--[[Configuration]]--
+_G._PlayerChams = true -- Chams other players
+_G.RainbowLine = true -- Rainbow line mode
+_G._PlayerText = false -- Display player names and health
+_G._RainbowText = false -- Use rainbow text effect
+
+--[[Default Settings]]--
+local defaultSettings = {
+    _PlayerChams = false,
+    RainbowLine = false,
+    _PlayerText = false,
+    _RainbowText = false
+}
+for key, value in pairs(defaultSettings) do
+    _G[key] = _G[key] or value
+end
+
+local FillColor = Color3.fromRGB(154, 215, 255)
+local DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
+local FillTransparency = 0.5
+local OutlineColor = Color3.fromRGB(0, 0, 0)
+local OutlineTransparency = 0.4
+
+local CoreGui = game:GetService("CoreGui")
+local Players = game:GetService("Players")
+local lp = Players.LocalPlayer
+local Storage = CoreGui:FindFirstChild("ChamsStorage") or Instance.new("Folder", CoreGui)
+Storage.Name = "ChamsStorage"
+
+local playerHighlights = {}
+local playerTexts = {}
+local connections = {}
+
+--[[Generate Smooth Rainbow Color]]--
+local function getRainbowColor()
+    return Color3.fromHSV((tick() % 5) / 5, 1, 1)
+end
+
+--[[Update Highlight Function]]--
+local function updateHighlight(plr)
+    local highlight = playerHighlights[plr.UserId]
+    if not highlight then
+        highlight = Instance.new("Highlight")
+        highlight.Name = plr.Name
+        highlight.FillColor = FillColor
+        highlight.DepthMode = DepthMode
+        highlight.FillTransparency = FillTransparency
+        highlight.OutlineColor = OutlineColor
+        highlight.OutlineTransparency = OutlineTransparency
+        highlight.Parent = Storage
+        playerHighlights[plr.UserId] = highlight
+    end
+
+    local function updateHighlightLoop()
+        while highlight and highlight.Parent do
+            local char = plr.Character
+            if char then
+                highlight.Adornee = char
+                if _G.RainbowLine then
+                    highlight.OutlineColor = getRainbowColor()
+                end
+            end
+            task.wait(0.5)
+        end
+    end
+
+    task.spawn(updateHighlightLoop)
+end
+
+--[[Update Text Label Function]]--
+local function updateTextLabel(plr)
+    local char = plr.Character
+    if not char then return end
+
+    local head = char:FindFirstChild("Head")
+    if not head then return end
+
+    local billboard = head:FindFirstChild("BillboardGui")
+    if not billboard then
+        billboard = Instance.new("BillboardGui")
+        billboard.Name = "BillboardGui"
+        billboard.Size = UDim2.new(0, 200, 0, 50)
+        billboard.Adornee = head
+        billboard.AlwaysOnTop = true
+        billboard.StudsOffset = Vector3.new(0, 3, 0)
+        billboard.Parent = head
+    end
+
+    local textLabel = billboard:FindFirstChild("TextLabel")
+    if not textLabel then
+        textLabel = Instance.new("TextLabel")
+        textLabel.Name = "TextLabel"
+        textLabel.Size = UDim2.new(1, 0, 1, 0)
+        textLabel.BackgroundTransparency = 1
+        textLabel.TextColor3 = Color3.new(1, 1, 1)
+        textLabel.TextStrokeTransparency = 1
+        textLabel.TextScaled = true
+        textLabel.TextStrokeColor3 = Color3.new(0, 0, 0)
+        textLabel.Parent = billboard
+        playerTexts[plr.UserId] = textLabel
+    end
+
+    local function updateTextLabelLoop()
+        while textLabel and textLabel.Parent do
+            if plr.Character and plr.Character:FindFirstChild("Humanoid") then
+                textLabel.Text = plr.Name .. "\nHealth: " .. math.ceil(plr.Character.Humanoid.Health)
+                if _G._RainbowText then
+                    textLabel.TextColor3 = getRainbowColor()
+                end
+            end
+            task.wait(0.5)
+        end
+    end
+
+    task.spawn(updateTextLabelLoop)
+end
+
+--[[Handle Player and Local Player Respawns]]--
+local function onPlayerRespawn(plr)
+    if _G._PlayerChams then
+        updateHighlight(plr)
+    end
+    if _G._PlayerText then
+        updateTextLabel(plr)
+    end
+end
+local function onLocalPlayerRespawn()
+    local localPlayerHighlight = playerHighlights[lp.UserId]
+    if localPlayerHighlight then
+        localPlayerHighlight:Destroy()
+        playerHighlights[lp.UserId] = nil
+    end
+    if _G._PlayerChams then
+        updateHighlight(lp)
+    end
+end
+
+--[[Toggle ESP and Text]]--
+local function toggleESP(enabled)
+    if enabled then
+        for _, plr in ipairs(Players:GetPlayers()) do
+            if plr ~= lp and not playerHighlights[plr.UserId] then
+                updateHighlight(plr)
+            end
+        end
+        if not connections["PlayerAdded"] then
+            connections["PlayerAdded"] = Players.PlayerAdded:Connect(function(plr)
+                if plr ~= lp and not playerHighlights[plr.UserId] then
+                    updateHighlight(plr)
+                end
+            end)
+        end
+    else
+        for _, child in ipairs(Storage:GetChildren()) do
+            if child:IsA("Highlight") then
+                child:Destroy()
+                playerHighlights[child.Name] = nil
+            end
+        end
+        if connections["PlayerAdded"] then
+            connections["PlayerAdded"]:Disconnect()
+            connections["PlayerAdded"] = nil
+        end
+    end
+end
+
+local function togglePlayerText(enabled)
+    _G._PlayerText = enabled
+    if enabled then
+        for _, plr in ipairs(Players:GetPlayers()) do
+            if plr ~= lp and not playerTexts[plr.UserId] then
+                updateTextLabel(plr)
+            end
+        end
+    else
+        for _, textLabel in pairs(playerTexts) do
+            if textLabel and textLabel.Parent then
+                textLabel.Parent:Destroy()
+            end
+        end
+        playerTexts = {}
+    end
+end
+
+--[[Refresh ESP Settings]]--
+local function refreshESP()
+    toggleESP(_G._PlayerChams)
+    togglePlayerText(_G._PlayerText)
+end
+
+--[[Connection to Events]]--
+Players.PlayerAdded:Connect(onPlayerRespawn)
+Players.PlayerRemoving:Connect(function(plr)
+    local existingHighlight = playerHighlights[plr.UserId]
+    if existingHighlight then
+        existingHighlight:Destroy()
+        playerHighlights[plr.UserId] = nil
+    end
+    if playerTexts[plr.UserId] then
+        playerTexts[plr.UserId].Parent:Destroy()
+        playerTexts[plr.UserId] = nil
+    end
+end)
+
+lp.CharacterAdded:Connect(onLocalPlayerRespawn)
+
+--[[Update Function for Dynamic Changes]]--
+task.spawn(function()
+    while true do
+        refreshESP()
+        task.wait(2)
+    end
+end)
+
+-- Start periodic highlight update and initial setup
+task.spawn(function()
+    while true do
+        if _G._PlayerChams then
+            for _, plr in ipairs(Players:GetPlayers()) do
+                if plr ~= lp and not playerHighlights[plr.UserId] then
+                    updateHighlight(plr)
+                end
+            end
+        end
+        task.wait(2)
+    end
+end)
+
+task.spawn(function()
+    while true do
+        if _G._PlayerText then
+            for _, plr in ipairs(Players:GetPlayers()) do
+                if plr ~= lp and not playerTexts[plr.UserId] then
+                    updateTextLabel(plr)
+                end
+            end
+        end
+        task.wait(2)
+    end
+end)
+
+refreshESP()
+  	end    
+})
+
+Tab:AddButton({
+	Name = "Off chams",
+	Callback = function()
+      		--[[Configuration]]--
+_G._PlayerChams = false -- Chams other players
+_G.RainbowLine = false -- Rainbow line mode
+_G._PlayerText = false -- Display player names and health
+_G._RainbowText = false -- Use rainbow text effect
+
+--[[Default Settings]]--
+local defaultSettings = {
+    _PlayerChams = false,
+    RainbowLine = false,
+    _PlayerText = false,
+    _RainbowText = false
+}
+for key, value in pairs(defaultSettings) do
+    _G[key] = _G[key] or value
+end
+
+local FillColor = Color3.fromRGB(154, 215, 255)
+local DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
+local FillTransparency = 0.5
+local OutlineColor = Color3.fromRGB(0, 0, 0)
+local OutlineTransparency = 0.4
+
+local CoreGui = game:GetService("CoreGui")
+local Players = game:GetService("Players")
+local lp = Players.LocalPlayer
+local Storage = CoreGui:FindFirstChild("ChamsStorage") or Instance.new("Folder", CoreGui)
+Storage.Name = "ChamsStorage"
+
+local playerHighlights = {}
+local playerTexts = {}
+local connections = {}
+
+--[[Generate Smooth Rainbow Color]]--
+local function getRainbowColor()
+    return Color3.fromHSV((tick() % 5) / 5, 1, 1)
+end
+
+--[[Update Highlight Function]]--
+local function updateHighlight(plr)
+    local highlight = playerHighlights[plr.UserId]
+    if not highlight then
+        highlight = Instance.new("Highlight")
+        highlight.Name = plr.Name
+        highlight.FillColor = FillColor
+        highlight.DepthMode = DepthMode
+        highlight.FillTransparency = FillTransparency
+        highlight.OutlineColor = OutlineColor
+        highlight.OutlineTransparency = OutlineTransparency
+        highlight.Parent = Storage
+        playerHighlights[plr.UserId] = highlight
+    end
+
+    local function updateHighlightLoop()
+        while highlight and highlight.Parent do
+            local char = plr.Character
+            if char then
+                highlight.Adornee = char
+                if _G.RainbowLine then
+                    highlight.OutlineColor = getRainbowColor()
+                end
+            end
+            task.wait(0.5)
+        end
+    end
+
+    task.spawn(updateHighlightLoop)
+end
+
+--[[Update Text Label Function]]--
+local function updateTextLabel(plr)
+    local char = plr.Character
+    if not char then return end
+
+    local head = char:FindFirstChild("Head")
+    if not head then return end
+
+    local billboard = head:FindFirstChild("BillboardGui")
+    if not billboard then
+        billboard = Instance.new("BillboardGui")
+        billboard.Name = "BillboardGui"
+        billboard.Size = UDim2.new(0, 200, 0, 50)
+        billboard.Adornee = head
+        billboard.AlwaysOnTop = true
+        billboard.StudsOffset = Vector3.new(0, 3, 0)
+        billboard.Parent = head
+    end
+
+    local textLabel = billboard:FindFirstChild("TextLabel")
+    if not textLabel then
+        textLabel = Instance.new("TextLabel")
+        textLabel.Name = "TextLabel"
+        textLabel.Size = UDim2.new(1, 0, 1, 0)
+        textLabel.BackgroundTransparency = 1
+        textLabel.TextColor3 = Color3.new(1, 1, 1)
+        textLabel.TextStrokeTransparency = 1
+        textLabel.TextScaled = true
+        textLabel.TextStrokeColor3 = Color3.new(0, 0, 0)
+        textLabel.Parent = billboard
+        playerTexts[plr.UserId] = textLabel
+    end
+
+    local function updateTextLabelLoop()
+        while textLabel and textLabel.Parent do
+            if plr.Character and plr.Character:FindFirstChild("Humanoid") then
+                textLabel.Text = plr.Name .. "\nHealth: " .. math.ceil(plr.Character.Humanoid.Health)
+                if _G._RainbowText then
+                    textLabel.TextColor3 = getRainbowColor()
+                end
+            end
+            task.wait(0.5)
+        end
+    end
+
+    task.spawn(updateTextLabelLoop)
+end
+
+--[[Handle Player and Local Player Respawns]]--
+local function onPlayerRespawn(plr)
+    if _G._PlayerChams then
+        updateHighlight(plr)
+    end
+    if _G._PlayerText then
+        updateTextLabel(plr)
+    end
+end
+local function onLocalPlayerRespawn()
+    local localPlayerHighlight = playerHighlights[lp.UserId]
+    if localPlayerHighlight then
+        localPlayerHighlight:Destroy()
+        playerHighlights[lp.UserId] = nil
+    end
+    if _G._PlayerChams then
+        updateHighlight(lp)
+    end
+end
+
+--[[Toggle ESP and Text]]--
+local function toggleESP(enabled)
+    if enabled then
+        for _, plr in ipairs(Players:GetPlayers()) do
+            if plr ~= lp and not playerHighlights[plr.UserId] then
+                updateHighlight(plr)
+            end
+        end
+        if not connections["PlayerAdded"] then
+            connections["PlayerAdded"] = Players.PlayerAdded:Connect(function(plr)
+                if plr ~= lp and not playerHighlights[plr.UserId] then
+                    updateHighlight(plr)
+                end
+            end)
+        end
+    else
+        for _, child in ipairs(Storage:GetChildren()) do
+            if child:IsA("Highlight") then
+                child:Destroy()
+                playerHighlights[child.Name] = nil
+            end
+        end
+        if connections["PlayerAdded"] then
+            connections["PlayerAdded"]:Disconnect()
+            connections["PlayerAdded"] = nil
+        end
+    end
+end
+
+local function togglePlayerText(enabled)
+    _G._PlayerText = enabled
+    if enabled then
+        for _, plr in ipairs(Players:GetPlayers()) do
+            if plr ~= lp and not playerTexts[plr.UserId] then
+                updateTextLabel(plr)
+            end
+        end
+    else
+        for _, textLabel in pairs(playerTexts) do
+            if textLabel and textLabel.Parent then
+                textLabel.Parent:Destroy()
+            end
+        end
+        playerTexts = {}
+    end
+end
+
+--[[Refresh ESP Settings]]--
+local function refreshESP()
+    toggleESP(_G._PlayerChams)
+    togglePlayerText(_G._PlayerText)
+end
+
+--[[Connection to Events]]--
+Players.PlayerAdded:Connect(onPlayerRespawn)
+Players.PlayerRemoving:Connect(function(plr)
+    local existingHighlight = playerHighlights[plr.UserId]
+    if existingHighlight then
+        existingHighlight:Destroy()
+        playerHighlights[plr.UserId] = nil
+    end
+    if playerTexts[plr.UserId] then
+        playerTexts[plr.UserId].Parent:Destroy()
+        playerTexts[plr.UserId] = nil
+    end
+end)
+
+lp.CharacterAdded:Connect(onLocalPlayerRespawn)
+
+--[[Update Function for Dynamic Changes]]--
+task.spawn(function()
+    while true do
+        refreshESP()
+        task.wait(2)
+    end
+end)
+
+-- Start periodic highlight update and initial setup
+task.spawn(function()
+    while true do
+        if _G._PlayerChams then
+            for _, plr in ipairs(Players:GetPlayers()) do
+                if plr ~= lp and not playerHighlights[plr.UserId] then
+                    updateHighlight(plr)
+                end
+            end
+        end
+        task.wait(2)
+    end
+end)
+
+task.spawn(function()
+    while true do
+        if _G._PlayerText then
+            for _, plr in ipairs(Players:GetPlayers()) do
+                if plr ~= lp and not playerTexts[plr.UserId] then
+                    updateTextLabel(plr)
+                end
+            end
+        end
+        task.wait(2)
+    end
+end)
+
+refreshESP()
+  	end    
+})
+
+Tab:AddButton({
+	Name = "ESP (FULL REVAMP)",
+	Callback = function()
+      		local Settings = {
+    Box_Color = Color3.fromRGB(255, 0, 0),
+    Tracer_Color = Color3.fromRGB(255, 0, 0),
+    Tracer_Thickness = 1,
+    Box_Thickness = 1,
+    Tracer_Origin = "Bottom", -- Middle or Bottom if FollowMouse is on this won't matter...
+    Tracer_FollowMouse = false,
+    Tracers = false
+}
+local Team_Check = {
+    TeamCheck = true, -- if TeamColor is on this won't matter...
+    Green = Color3.fromRGB(0, 255, 0),
+    Red = Color3.fromRGB(255, 0, 0)
+}
+local TeamColor = true
+
+--// SEPARATION
+local player = game:GetService("Players").LocalPlayer
+local camera = game:GetService("Workspace").CurrentCamera
+local mouse = player:GetMouse()
+
+local function NewQuad(thickness, color)
+    local quad = Drawing.new("Quad")
+    quad.Visible = false
+    quad.PointA = Vector2.new(0,0)
+    quad.PointB = Vector2.new(0,0)
+    quad.PointC = Vector2.new(0,0)
+    quad.PointD = Vector2.new(0,0)
+    quad.Color = color
+    quad.Filled = false
+    quad.Thickness = thickness
+    quad.Transparency = 1
+    return quad
+end
+
+local function NewLine(thickness, color)
+    local line = Drawing.new("Line")
+    line.Visible = false
+    line.From = Vector2.new(0, 0)
+    line.To = Vector2.new(0, 0)
+    line.Color = color 
+    line.Thickness = thickness
+    line.Transparency = 1
+    return line
+end
+
+local function Visibility(state, lib)
+    for u, x in pairs(lib) do
+        x.Visible = state
+    end
+end
+
+local function ToColor3(col) --Function to convert, just cuz c;
+    local r = col.r --Red value
+    local g = col.g --Green value
+    local b = col.b --Blue value
+    return Color3.new(r,g,b); --Color3 datatype, made of the RGB inputs
+end
+
+local black = Color3.fromRGB(0, 0 ,0)
+local function ESP(plr)
+    local library = {
+        --//Tracer and Black Tracer(black border)
+        blacktracer = NewLine(Settings.Tracer_Thickness*2, black),
+        tracer = NewLine(Settings.Tracer_Thickness, Settings.Tracer_Color),
+        --//Box and Black Box(black border)
+        black = NewQuad(Settings.Box_Thickness*2, black),
+        box = NewQuad(Settings.Box_Thickness, Settings.Box_Color),
+        --//Bar and Green Health Bar (part that moves up/down)
+        healthbar = NewLine(3, black),
+        greenhealth = NewLine(1.5, black)
+    }
+
+    local function Colorize(color)
+        for u, x in pairs(library) do
+            if x ~= library.healthbar and x ~= library.greenhealth and x ~= library.blacktracer and x ~= library.black then
+                x.Color = color
+            end
+        end
+    end
+
+    local function Updater()
+        local connection
+        connection = game:GetService("RunService").RenderStepped:Connect(function()
+            if plr.Character ~= nil and plr.Character:FindFirstChild("Humanoid") ~= nil and plr.Character:FindFirstChild("HumanoidRootPart") ~= nil and plr.Character.Humanoid.Health > 0 and plr.Character:FindFirstChild("Head") ~= nil then
+                local HumPos, OnScreen = camera:WorldToViewportPoint(plr.Character.HumanoidRootPart.Position)
+                if OnScreen then
+                    local head = camera:WorldToViewportPoint(plr.Character.Head.Position)
+                    local DistanceY = math.clamp((Vector2.new(head.X, head.Y) - Vector2.new(HumPos.X, HumPos.Y)).magnitude, 2, math.huge)
+                    
+                    local function Size(item)
+                        item.PointA = Vector2.new(HumPos.X + DistanceY, HumPos.Y - DistanceY*2)
+                        item.PointB = Vector2.new(HumPos.X - DistanceY, HumPos.Y - DistanceY*2)
+                        item.PointC = Vector2.new(HumPos.X - DistanceY, HumPos.Y + DistanceY*2)
+                        item.PointD = Vector2.new(HumPos.X + DistanceY, HumPos.Y + DistanceY*2)
+                    end
+                    Size(library.box)
+                    Size(library.black)
+
+                    --//Tracer 
+                    if Settings.Tracers then
+                        if Settings.Tracer_Origin == "Middle" then
+                            library.tracer.From = camera.ViewportSize*0.5
+                            library.blacktracer.From = camera.ViewportSize*0.5
+                        elseif Settings.Tracer_Origin == "Bottom" then
+                            library.tracer.From = Vector2.new(camera.ViewportSize.X*0.5, camera.ViewportSize.Y) 
+                            library.blacktracer.From = Vector2.new(camera.ViewportSize.X*0.5, camera.ViewportSize.Y)
+                        end
+                        if Settings.Tracer_FollowMouse then
+                            library.tracer.From = Vector2.new(mouse.X, mouse.Y+36)
+                            library.blacktracer.From = Vector2.new(mouse.X, mouse.Y+36)
+                        end
+                        library.tracer.To = Vector2.new(HumPos.X, HumPos.Y + DistanceY*2)
+                        library.blacktracer.To = Vector2.new(HumPos.X, HumPos.Y + DistanceY*2)
+                    else 
+                        library.tracer.From = Vector2.new(0, 0)
+                        library.blacktracer.From = Vector2.new(0, 0)
+                        library.tracer.To = Vector2.new(0, 0)
+                        library.blacktracer.To = Vector2.new(0, 02)
+                    end
+
+                    --// Health Bar
+                    local d = (Vector2.new(HumPos.X - DistanceY, HumPos.Y - DistanceY*2) - Vector2.new(HumPos.X - DistanceY, HumPos.Y + DistanceY*2)).magnitude 
+                    local healthoffset = plr.Character.Humanoid.Health/plr.Character.Humanoid.MaxHealth * d
+
+                    library.greenhealth.From = Vector2.new(HumPos.X - DistanceY - 4, HumPos.Y + DistanceY*2)
+                    library.greenhealth.To = Vector2.new(HumPos.X - DistanceY - 4, HumPos.Y + DistanceY*2 - healthoffset)
+
+                    library.healthbar.From = Vector2.new(HumPos.X - DistanceY - 4, HumPos.Y + DistanceY*2)
+                    library.healthbar.To = Vector2.new(HumPos.X - DistanceY - 4, HumPos.Y - DistanceY*2)
+
+                    local green = Color3.fromRGB(0, 255, 0)
+                    local red = Color3.fromRGB(255, 0, 0)
+
+                    library.greenhealth.Color = red:lerp(green, plr.Character.Humanoid.Health/plr.Character.Humanoid.MaxHealth);
+
+                    if Team_Check.TeamCheck then
+                        if plr.TeamColor == player.TeamColor then
+                            Colorize(Team_Check.Green)
+                        else 
+                            Colorize(Team_Check.Red)
+                        end
+                    else 
+                        library.tracer.Color = Settings.Tracer_Color
+                        library.box.Color = Settings.Box_Color
+                    end
+                    if TeamColor == true then
+                        Colorize(plr.TeamColor.Color)
+                    end
+                    Visibility(true, library)
+                else 
+                    Visibility(false, library)
+                end
+            else 
+                Visibility(false, library)
+                if game.Players:FindFirstChild(plr.Name) == nil then
+                    connection:Disconnect()
+                end
+            end
+        end)
+    end
+    coroutine.wrap(Updater)()
+end
+
+for i, v in pairs(game:GetService("Players"):GetPlayers()) do
+    if v.Name ~= player.Name then
+        coroutine.wrap(ESP)(v)
+    end
+end
+
+game.Players.PlayerAdded:Connect(function(newplr)
+    if newplr.Name ~= player.Name then
+        coroutine.wrap(ESP)(newplr)
+    end
+end)
+  	end    
+})
+
+local Section = Tab:AddSection({
+	Name = "TriggerBot"
+})
+
+Tab:AddButton({
+	Name = "TriggerBot (Q to activate)",
+	Callback = function()
+      		local enabled = true
+local toggle = Enum.KeyCode.Q
+local mouse = game:GetService("Players").LocalPlayer:GetMouse()
+game:GetService("RunService").RenderStepped:Connect(function()
+    if mouse.Target.Parent:FindFirstChildOfClass("Humanoid") and mouse.Target.Parent:FindFirstChildOfClass("Humanoid").Health > 0 and game:GetService("Players"):GetPlayerFromCharacter(mouse.Target.Parent).Team ~= game:GetService("Players").LocalPlayer.Team and enabled then
+        mouse1press()
+        repeat
+            game:GetService("RunService").RenderStepped:Wait()
+        until not mouse.Target.Parent:FindFirstChildOfClass("Humanoid")
+        mouse1release()
+    end
+end)
+
+game:GetService("UserInputService").InputBegan:Connect(function(i,gp)
+    if i.KeyCode == toggle then
+        enabled = not enabled
+        local hint = Instance.new("Hint",game.CoreGui)
+        hint.Text = "Toggled: "..tostring(enabled)
+        wait(2)
+        hint:Destroy()
+    end
+end)
+  	end    
+})
+
+local Section = Tab:AddSection({
+	Name = "Extra"
+})
+
+Tab:AddButton({
+	Name = "Infinite Yield (IY)",
+	Callback = function()
+      		loadstring(game:HttpGet('https://raw.githubusercontent.com/EdgeIY/infiniteyield/master/source'))()
+  	end
+})
+
+Tab:AddButton({
+	Name = "Dex Explorer",
+	Callback = function()
+      		loadstring(game:HttpGet("https://raw.githubusercontent.com/Babyhamsta/RBLX_Scripts/main/Universal/BypassedDarkDexV3.lua", true))()
+  	end
+})
+
+Tab:AddButton({
+	Name = "Noclip",
+	Callback = function()
+      		local Workspace = game:GetService("Workspace")
+local CoreGui = game:GetService("CoreGui")
+local Players = game:GetService("Players")
+local Noclip = Instance.new("ScreenGui")
+local BG = Instance.new("Frame")
+local Title = Instance.new("TextLabel")
+local Toggle = Instance.new("TextButton")
+local StatusPF = Instance.new("TextLabel")
+local Status = Instance.new("TextLabel")
+local Plr = Players.LocalPlayer
+local Clipon = false
+
+Noclip.Name = "Noclip"
+Noclip.Parent = game.CoreGui
+
+BG.Name = "BG"
+BG.Parent = Noclip
+BG.BackgroundColor3 = Color3.new(0.0980392, 0.0980392, 0.0980392)
+BG.BorderColor3 = Color3.new(0.0588235, 0.0588235, 0.0588235)
+BG.BorderSizePixel = 2
+BG.Position = UDim2.new(0.149479166, 0, 0.82087779, 0)
+BG.Size = UDim2.new(0, 210, 0, 127)
+BG.Active = true
+BG.Draggable = true
+
+Title.Name = "Title"
+Title.Parent = BG
+Title.BackgroundColor3 = Color3.new(0.266667, 0.00392157, 0.627451)
+Title.BorderColor3 = Color3.new(0.180392, 0, 0.431373)
+Title.BorderSizePixel = 2
+Title.Size = UDim2.new(0, 210, 0, 33)
+Title.Font = Enum.Font.Highway
+Title.Text = "Noclip"
+Title.TextColor3 = Color3.new(1, 1, 1)
+Title.FontSize = Enum.FontSize.Size32
+Title.TextSize = 30
+Title.TextStrokeColor3 = Color3.new(0.180392, 0, 0.431373)
+Title.TextStrokeTransparency = 0
+
+Toggle.Parent = BG
+Toggle.BackgroundColor3 = Color3.new(0.266667, 0.00392157, 0.627451)
+Toggle.BorderColor3 = Color3.new(0.180392, 0, 0.431373)
+Toggle.BorderSizePixel = 2
+Toggle.Position = UDim2.new(0.152380958, 0, 0.374192119, 0)
+Toggle.Size = UDim2.new(0, 146, 0, 36)
+Toggle.Font = Enum.Font.Highway
+Toggle.FontSize = Enum.FontSize.Size28
+Toggle.Text = "Toggle"
+Toggle.TextColor3 = Color3.new(1, 1, 1)
+Toggle.TextSize = 25
+Toggle.TextStrokeColor3 = Color3.new(0.180392, 0, 0.431373)
+Toggle.TextStrokeTransparency = 0
+
+StatusPF.Name = "StatusPF"
+StatusPF.Parent = BG
+StatusPF.BackgroundColor3 = Color3.new(1, 1, 1)
+StatusPF.BackgroundTransparency = 1
+StatusPF.Position = UDim2.new(0.314285725, 0, 0.708661377, 0)
+StatusPF.Size = UDim2.new(0, 56, 0, 20)
+StatusPF.Font = Enum.Font.Highway
+StatusPF.FontSize = Enum.FontSize.Size24
+StatusPF.Text = "Status:"
+StatusPF.TextColor3 = Color3.new(1, 1, 1)
+StatusPF.TextSize = 20
+StatusPF.TextStrokeColor3 = Color3.new(0.333333, 0.333333, 0.333333)
+StatusPF.TextStrokeTransparency = 0
+StatusPF.TextWrapped = true
+
+Status.Name = "Status"
+Status.Parent = BG
+Status.BackgroundColor3 = Color3.new(1, 1, 1)
+Status.BackgroundTransparency = 1
+Status.Position = UDim2.new(0.580952346, 0, 0.708661377, 0)
+Status.Size = UDim2.new(0, 56, 0, 20)
+Status.Font = Enum.Font.Highway
+Status.FontSize = Enum.FontSize.Size14
+Status.Text = "off"
+Status.TextColor3 = Color3.new(0.666667, 0, 0)
+Status.TextScaled = true
+Status.TextSize = 14
+Status.TextStrokeColor3 = Color3.new(0.180392, 0, 0.431373)
+Status.TextWrapped = true
+Status.TextXAlignment = Enum.TextXAlignment.Left
+
+
+Toggle.MouseButton1Click:connect(function()
+	if Status.Text == "off" then
+		Clipon = true
+		Status.Text = "on"
+		Status.TextColor3 = Color3.new(0,185,0)
+		Stepped = game:GetService("RunService").Stepped:Connect(function()
+			if not Clipon == false then
+				for a, b in pairs(Workspace:GetChildren()) do
+                if b.Name == Plr.Name then
+                for i, v in pairs(Workspace[Plr.Name]:GetChildren()) do
+                if v:IsA("BasePart") then
+                v.CanCollide = false
+                end end end end
+			else
+				Stepped:Disconnect()
+			end
+		end)
+	elseif Status.Text == "on" then
+		Clipon = false
+		Status.Text = "off"
+		Status.TextColor3 = Color3.new(170,0,0)
+	end
+end)
+  	end
+})
+
+OrionLib:Init()
