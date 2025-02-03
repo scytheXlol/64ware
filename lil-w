@@ -1,6 +1,6 @@
 local OrionLib = loadstring(game:HttpGet(('https://raw.githubusercontent.com/jensonhirst/Orion/main/source')))()
 
-local Window = OrionLib:MakeWindow({Name = "64ware.cc V0.62", HidePremium = true, SaveConfig = false, ConfigFolder = "OrionTest"})
+local Window = OrionLib:MakeWindow({Name = "64ware.cc V0.7", HidePremium = true, SaveConfig = false, ConfigFolder = "OrionTest"})
 local Tab = Window:MakeTab({
 	Name = "Credits",
 	Icon = "rbxassetid://18449541318",
@@ -26,7 +26,7 @@ local Tab = Window:MakeTab({
 })
 
 local Section = Tab:AddSection({
-	Name = "64WARE.CC CURRENT VERSION - V0.62 BETA"
+	Name = "64WARE.CC CURRENT VERSION - V0.7 BETA"
 })
 
 local Section = Tab:AddSection({
@@ -1785,7 +1785,42 @@ end)
 })
 
 local Section = Tab:AddSection({
-	Name = "RAGE (IN DEV)"
+	Name = "Trolling"
+})
+
+Tab:AddButton({
+	Name = "Spam EZ (u won't get banned, its undetect XD)",
+	Callback = function()
+      		local hate = {"EZ"}   
+   
+while true do   
+    task.wait(.1)   
+    game.ReplicatedStorage.Events:WaitForChild("PlayerChatted"):FireServer(hate[math.random(1,#hate)], nil, "Innocent", false, false, false)
+end
+  	end    
+})
+
+Tab:AddButton({
+	Name = "Spam 64ware",
+	Callback = function()
+      		local hate = {"GET 64ware HERE -> HTTPS://DISCORD.GG/5sbWnpXF"}   
+   
+while true do   
+    task.wait(.1)   
+    game.ReplicatedStorage.Events:WaitForChild("PlayerChatted"):FireServer(hate[math.random(1,#hate)], nil, "Innocent", false, false, false)
+end
+  	end    
+})
+
+Tab:AddButton({
+	Name = "Loud AK47 sounds (may break the chat!)",
+	Callback = function()
+      	game:GetService("RunService").Heartbeat:Connect(function()
+    for _, Player in game:GetService("Players"):GetChildren() do
+        game:GetService("ReplicatedStorage").Events.Whizz:FireServer(Player, game:GetService("ReplicatedStorage").Weapons.AK47)
+    end
+end)	
+  	end    
 })
 
 OrionLib:Init()
